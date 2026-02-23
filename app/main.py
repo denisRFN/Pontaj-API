@@ -3,10 +3,15 @@ from pydantic import BaseModel
 from typing import Dict, List
 import sqlite3
 import json
+import os
 
-app = FastAPI()
+app = FastAPI(title="Pontaj API")
 
-DB_FILE = "pontaj.db"
+# -----------------------------
+# DATABASE CONFIG
+# -----------------------------
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_FILE = os.path.join(BASE_DIR, "pontaj.db")
 
 
 # -----------------------------
@@ -52,6 +57,19 @@ class CalendarData(BaseModel):
     prezente: List[str]
     concediu: List[str]
     wfh: List[str]
+
+
+# -----------------------------
+# ROOT + HEALTH
+# -----------------------------
+@app.get("/")
+def root():
+    return {"status": "Pontaj API running"}
+
+
+@app.get("/health")
+def health():
+    return {"healthy": True}
 
 
 # -----------------------------
