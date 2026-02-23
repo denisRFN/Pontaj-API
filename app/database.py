@@ -1,110 +1,103 @@
-import sqlite3
-import json
 import os
+import json
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, Column, Integer, Text
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_FILE = os.path.join(BASE_DIR, "pontaj.db")
+# Load environment variables
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+print("DATABASE_URL =", DATABASE_URL)
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine)
+Base = declarative_base()
 
 
 # -----------------------------
-# CONNECTION
+# MODELS
 # -----------------------------
-def get_connection():
-    return sqlite3.connect(DB_FILE)
+class Hours(Base):
+    __tablename__ = "hours"
+
+    id = Column(Integer, primary_key=True, index=True)
+    overtime = Column(Text)
+    permission = Column(Text)
+
+
+class Calendar(Base):
+    __tablename__ = "calendar"
+
+    id = Column(Integer, primary_key=True, index=True)
+    prezente = Column(Text)
+    concediu = Column(Text)
+    wfh = Column(Text)
 
 
 # -----------------------------
 # INIT DB
 # -----------------------------
 def init_db():
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS hours (
-            id INTEGER PRIMARY KEY,
-            overtime TEXT,
-            permission TEXT
-        )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS calendar (
-            id INTEGER PRIMARY KEY,
-            prezente TEXT,
-            concediu TEXT,
-            wfh TEXT
-        )
-    """)
-
-    conn.commit()
-    conn.close()
+    Base.metadata.create_all(bind=engine)
 
 
 # -----------------------------
 # SAVE HOURS
 # -----------------------------
 def save_hours_to_db(overtime, permission):
-    conn = get_connection()
-    cursor = conn.cursor()
+    db = SessionLocal()
+    db.query(Hours).delete()
 
-    cursor.execute("DELETE FROM hours")
-    cursor.execute(
-        "INSERT INTO hours (overtime, permission) VALUES (?, ?)",
-        (json.dumps(overtime), json.dumps(permission))
+    new_entry = Hours(
+        overtime=json.dumps(overtime),
+        permission=json.dumps(permission)
     )
 
-    conn.commit()
-    conn.close()
+    db.add(new_entry)
+    db.commit()
+    db.close()
 
 
 # -----------------------------
 # SAVE CALENDAR
 # -----------------------------
 def save_calendar_to_db(prezente, concediu, wfh):
-    conn = get_connection()
-    cursor = conn.cursor()
+    db = SessionLocal()
+    db.query(Calendar).delete()
 
-    cursor.execute("DELETE FROM calendar")
-    cursor.execute(
-        "INSERT INTO calendar (prezente, concediu, wfh) VALUES (?, ?, ?)",
-        (
-            json.dumps(prezente),
-            json.dumps(concediu),
-            json.dumps(wfh)
-        )
+    new_entry = Calendar(
+        prezente=json.dumps(prezente),
+        concediu=json.dumps(concediu),
+        wfh=json.dumps(wfh)
     )
 
-    conn.commit()
-    conn.close()
+    db.add(new_entry)
+    db.commit()
+    db.close()
 
 
 # -----------------------------
 # GET ALL DATA
 # -----------------------------
 def get_all_from_db():
-    conn = get_connection()
-    cursor = conn.cursor()
+    db = SessionLocal()
 
-    cursor.execute("SELECT overtime, permission FROM hours LIMIT 1")
-    hours_row = cursor.fetchone()
+    hours_row = db.query(Hours).first()
+    calendar_row = db.query(Calendar).first()
 
-    cursor.execute("SELECT prezente, concediu, wfh FROM calendar LIMIT 1")
-    calendar_row = cursor.fetchone()
-
-    conn.close()
+    db.close()
 
     hours_data = {"overtime": {}, "permission": {}}
     calendar_data = {"prezente": [], "concediu": [], "wfh": []}
 
     if hours_row:
-        hours_data["overtime"] = json.loads(hours_row[0])
-        hours_data["permission"] = json.loads(hours_row[1])
+        hours_data["overtime"] = json.loads(hours_row.overtime)
+        hours_data["permission"] = json.loads(hours_row.permission)
 
     if calendar_row:
-        calendar_data["prezente"] = json.loads(calendar_row[0])
-        calendar_data["concediu"] = json.loads(calendar_row[1])
-        calendar_data["wfh"] = json.loads(calendar_row[2])
+        calendar_data["prezente"] = json.loads(calendar_row.prezente)
+        calendar_data["concediu"] = json.loads(calendar_row.concediu)
+        calendar_data["wfh"] = json.loads(calendar_row.wfh)
 
     return {
         "hours": hours_data,
