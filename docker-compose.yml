@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: pontaj_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: pontaj
+      POSTGRES_PASSWORD: pontajpass
+      POSTGRES_DB: pontajdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
