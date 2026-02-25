@@ -15,7 +15,7 @@ router = APIRouter(
 @router.post("/", response_model=CalendarResponse)
 def create_calendar(
     calendar: CalendarCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
     return crud_calendar.create_calendar(db, calendar)
@@ -31,7 +31,7 @@ def read_calendar(
     search: Optional[str] = None,
     sort_by: str = "id",
     order: str = "asc",
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
     return crud_calendar.get_calendar(
