@@ -5,7 +5,10 @@ def read_hours(
     skip: int = 0,
     limit: int = 10,
     overtime: Optional[str] = None,
+    overtime_gt: Optional[int] = None,
+    overtime_lt: Optional[int] = None,
     permission: Optional[str] = None,
+    search: Optional[str] = None,
     sort_by: str = "id",
     order: str = "asc",
     db: Session = Depends(get_db)
@@ -15,7 +18,10 @@ def read_hours(
         skip=skip,
         limit=limit,
         overtime=overtime,
+        overtime_gt=overtime_gt,
+        overtime_lt=overtime_lt,
         permission=permission,
+        search=search,
         sort_by=sort_by,
         order=order
     )
