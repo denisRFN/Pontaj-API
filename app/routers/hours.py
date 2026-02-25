@@ -15,7 +15,8 @@ router = APIRouter(
 @router.post("/", response_model=HoursResponse)
 def create_hours(
     hours: HoursCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     return crud_hours.create_hours(db, hours)
 
@@ -23,7 +24,7 @@ def create_hours(
 @router.get("/", response_model=list[HoursResponse])
 def read_hours(
     skip: int = 0,
-    limit: int = 10,
+    limit: int = 10
     overtime: Optional[str] = None,
     overtime_gt: Optional[int] = None,
     overtime_lt: Optional[int] = None,
@@ -31,7 +32,8 @@ def read_hours(
     search: Optional[str] = None,
     sort_by: str = "id",
     order: str = "asc",
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     return crud_hours.get_hours(
         db=db,
