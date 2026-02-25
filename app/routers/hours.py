@@ -24,7 +24,7 @@ def create_hours(
 @router.get("/", response_model=list[HoursResponse])
 def read_hours(
     skip: int = 0,
-    limit: int = 10
+    limit: int = 10,
     overtime: Optional[str] = None,
     overtime_gt: Optional[int] = None,
     overtime_lt: Optional[int] = None,
