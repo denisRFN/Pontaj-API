@@ -5,7 +5,7 @@ from typing import Optional
 from app.database import get_db
 from app.schemas.calendar import CalendarCreate, CalendarResponse
 from app.crud import calendar as crud_calendar
-
+from app.core.security import get_current_user
 router = APIRouter(
     prefix="/calendar",
     tags=["Calendar"]
@@ -16,6 +16,7 @@ router = APIRouter(
 def create_calendar(
     calendar: CalendarCreate,
     db: Session = Depends(get_db)
+    current_user = Depends(get_current_user)
 ):
     return crud_calendar.create_calendar(db, calendar)
 
@@ -31,6 +32,7 @@ def read_calendar(
     sort_by: str = "id",
     order: str = "asc",
     db: Session = Depends(get_db)
+    current_user = Depends(get_current_user)
 ):
     return crud_calendar.get_calendar(
         db=db,
