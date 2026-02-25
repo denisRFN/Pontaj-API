@@ -20,6 +20,14 @@ SessionLocal = sessionmaker(
 Base = declarative_base()
 
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
 def init_db():
     from app.models import hours, calendar
     Base.metadata.create_all(bind=engine)
