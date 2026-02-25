@@ -1,68 +1,24 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import Dict, List
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+from app.database import get_db, init_db
+from app.models.hours import Hours
 
-from app.database import (
-    init_db,
-    save_hours_to_db,
-    save_calendar_to_db,
-    get_all_from_db
-)
+app = FastAPI()
 
-app = FastAPI(title="Pontaj API")
-
-# Initialize PostgreSQL tables
-init_db()
+@app.on_event("startup")
+def on_startup():
+    init_db()
 
 
-# -----------------------------
-# MODELS
-# -----------------------------
-class HoursData(BaseModel):
-    overtime: Dict[str, float]
-    permission: Dict[str, float]
+@app.post("/hours")
+def create_hours(overtime: str, permission: str, db: Session = Depends(get_db)):
+    new_entry = Hours(
+        overtime=overtime,
+        permission=permission
+    )
 
+    db.add(new_entry)
+    db.commit()
+    db.refresh(new_entry)
 
-class CalendarData(BaseModel):
-    prezente: List[str]
-    concediu: List[str]
-    wfh: List[str]
-
-
-# -----------------------------
-# ROOT + HEALTH
-# -----------------------------
-@app.get("/")
-def root():
-    return {"status": "Pontaj API running"}
-
-
-@app.get("/health")
-def health():
-    return {"healthy": True}
-
-
-# -----------------------------
-# SAVE HOURS
-# -----------------------------
-@app.post("/save-hours")
-def save_hours(data: HoursData):
-    save_hours_to_db(data.overtime, data.permission)
-    return {"status": "hours saved"}
-
-
-# -----------------------------
-# SAVE CALENDAR
-# -----------------------------
-@app.post("/save-calendar")
-def save_calendar(data: CalendarData):
-    save_calendar_to_db(data.prezente, data.concediu, data.wfh)
-    return {"status": "calendar saved"}
-
-
-# -----------------------------
-# GET ALL DATA
-# -----------------------------
-@app.get("/all")
-def get_all():
-    return get_all_from_db()
+    return new_entry
