@@ -6,6 +6,7 @@ from app.database import get_db
 from app.schemas.hours import HoursCreate, HoursResponse
 from app.crud import hours as crud_hours
 from app.core.security import get_current_user
+from app.models.user import User
 router = APIRouter(
     prefix="/hours",
     tags=["Hours"]
