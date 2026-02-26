@@ -59,13 +59,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: python-app
-      
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_755AA4B87ECB4A6B8FD7AA8ED3B782E8 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7F5F56BF2A634BD2B19E27786E972B91 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_85E3B70C90084E20A3630880F6CFDB4A }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
@@ -73,4 +66,5 @@ jobs:
         with:
           app-name: 'prsonalpontaj-api'
           slot-name: 'Production'
+
           
