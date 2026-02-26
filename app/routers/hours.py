@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import Optional
-
+from app.core.dependencies import require_admin
 from app.database import get_db
 from app.schemas.hours import HoursCreate, HoursResponse
 from app.crud import hours as crud_hours
@@ -47,3 +47,11 @@ def read_hours(
         sort_by=sort_by,
         order=order
     )
+
+@router.delete("/{hour_id}")
+def delete_hour(
+    hour_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)  # 👈 admin only
+):
+
