@@ -55,6 +55,7 @@ def get_current_user(
             algorithms=[settings.ALGORITHM]
         )
         username: str = payload.get("sub")
+        role: str = payload.get("role")
         if username is None:
             raise credentials_exception
     except JWTError:
