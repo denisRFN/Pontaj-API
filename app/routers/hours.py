@@ -53,6 +53,14 @@ def read_hours(
 def delete_hour(
     hour_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)  # 👈 admin only
+    current_user: User = Depends(require_admin)  # 👈 AICI
 ):
+    hour = db.query(Hour).filter(Hour.id == hour_id).first()
+
+    if not hour:
+        raise HTTPException(status_code=404, detail="Hour not found")
+
+    db.delete(hour)
+    db.commit()
+    return {"message": "Deleted successfully"}
 
