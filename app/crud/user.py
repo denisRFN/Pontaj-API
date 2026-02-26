@@ -9,13 +9,15 @@ def get_user_by_username(db: Session, username: str):
 
 
 def create_user(db: Session, user: UserCreate):
-    from app.core.security import hash_password
     hashed_pw = hash_password(user.password)
+
     db_user = User(
         username=user.username,
         email=user.email,
-        hashed_password=hashed_pw
+        hashed_password=hashed_pw,
+        role=user.role
     )
+
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
