@@ -9,18 +9,30 @@ from app.core.security import get_current_user
 from app.models.user import User
 from app.models.hours import Hours
 from fastapi import HTTPException
+from datetime import date
+from sqlalchemy import extract
 router = APIRouter(
     prefix="/hours",
     tags=["Hours"]
 )
 @router.get("/me", response_model=list[HoursResponse])
 def read_my_hours(
+    month: Optional[int] = None,
+    year: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
-    return db.query(Hours).filter(
+    query = db.query(Hours).filter(
         Hours.user_id == current_user.id
-    ).all()
+    )
+
+    if month and year:
+        query = query.filter(
+            extract("month", Hours.work_date) == month,
+            extract("year", Hours.work_date) == year
+        )
+
+    return query.all()
 
 @router.post("/", response_model=HoursResponse)
 def create_hours(
