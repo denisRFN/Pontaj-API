@@ -9,13 +9,13 @@ class Hours(Base):
     id = Column(Integer, primary_key=True, index=True)
     work_date = Column(Date, nullable=False)
 
-    # tip zi
     permission = Column(Text)  # WFO, WFH, Vacation, Leave
 
-    # overtime real numeric
+    # overtime real 
     overtime_hours = Column(Integer, default=0)
 
-    # leave in hours (optional)
+    # leave in hours
     leave_hours = Column(Integer, default=0)
 
     user_id = Column(Integer, ForeignKey("users.id"))
+    user = relationship("User", back_populates="hours")
