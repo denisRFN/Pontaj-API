@@ -31,16 +31,15 @@ def get_annual_balance(db: Session, user_id: int, year: int):
 # ==========================================
 def create_hours(db: Session, hours, user_id: int):
 
+    print("CREATING FOR USER:", user_id)  # 🔥 DEBUG
+
     existing = db.query(Hours).filter(
         Hours.user_id == user_id,
         Hours.work_date == hours.work_date
     ).first()
 
     if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Pontaj deja înregistrat pentru această zi"
-        )
+        raise HTTPException(status_code=400, detail="Pontaj deja înregistrat")
 
     db_hours = Hours(
         work_date=hours.work_date,
