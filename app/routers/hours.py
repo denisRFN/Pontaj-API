@@ -1,17 +1,27 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import extract
 from typing import Optional
-from app.core.dependencies import require_admin
+
 from app.database import get_db
 from app.schemas.hours import HoursCreate, HoursResponse
 from app.crud import hours as crud_hours
 from app.core.security import get_current_user
+from app.core.dependencies import require_admin
 from app.models.user import User
 from app.models.hours import Hours
-from fastapi import HTTPException
-from datetime import date
-from sqlalchemy import extract
 
+
+# 🔥 DEFINIM ROUTER ÎNAINTE DE DECORATORS
+router = APIRouter(
+    prefix="/hours",
+    tags=["Hours"]
+)
+
+
+# ===============================
+# 🔹 ANNUAL BALANCE
+# ===============================
 @router.get("/balance/{year}")
 def get_balance(
     year: int,
@@ -23,11 +33,11 @@ def get_balance(
         current_user.id,
         year
     )
-router = APIRouter(
-    prefix="/hours",
-    tags=["Hours"]
-)
 
+
+# ===============================
+# 🔹 MY HOURS (FILTER BY MONTH/YEAR)
+# ===============================
 @router.get("/me", response_model=list[HoursResponse])
 def read_my_hours(
     month: Optional[int] = None,
@@ -47,42 +57,39 @@ def read_my_hours(
 
     return query.all()
 
+
+# ===============================
+# 🔹 CREATE
+# ===============================
 @router.post("/", response_model=HoursResponse)
 def create_hours(
     hours: HoursCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     return crud_hours.create_hours(db, hours, current_user.id)
 
 
+# ===============================
+# 🔹 READ ALL (ADMIN USE CASE)
+# ===============================
 @router.get("/", response_model=list[HoursResponse])
 def read_hours(
     skip: int = 0,
     limit: int = 10,
-    overtime: Optional[str] = None,
-    overtime_gt: Optional[int] = None,
-    overtime_lt: Optional[int] = None,
-    permission: Optional[str] = None,
-    search: Optional[str] = None,
-    sort_by: str = "id",
-    order: str = "asc",
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     return crud_hours.get_hours(
         db=db,
         skip=skip,
-        limit=limit,
-        overtime=overtime,
-        overtime_gt=overtime_gt,
-        overtime_lt=overtime_lt,
-        permission=permission,
-        search=search,
-        sort_by=sort_by,
-        order=order
+        limit=limit
     )
-    
+
+
+# ===============================
+# 🔹 UPDATE
+# ===============================
 @router.put("/{hour_id}")
 def update_hour(
     hour_id: int,
@@ -99,23 +106,30 @@ def update_hour(
         raise HTTPException(status_code=404, detail="Not found")
 
     hour.permission = data.get("permission", hour.permission)
+    hour.overtime_hours = data.get("overtime_hours", hour.overtime_hours)
+    hour.leave_hours = data.get("leave_hours", hour.leave_hours)
 
     db.commit()
     db.refresh(hour)
+
     return hour
-    
+
+
+# ===============================
+# 🔹 DELETE (ADMIN ONLY)
+# ===============================
 @router.delete("/{hour_id}")
 def delete_hour(
     hour_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)  # 👈 AICI
+    current_user: User = Depends(require_admin)
 ):
-    hour = db.query(Hour).filter(Hour.id == hour_id).first()
+    hour = db.query(Hours).filter(Hours.id == hour_id).first()
 
     if not hour:
         raise HTTPException(status_code=404, detail="Hour not found")
 
     db.delete(hour)
     db.commit()
-    return {"message": "Deleted successfully"}
 
+    return {"message": "Deleted successfully"}
