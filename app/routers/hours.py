@@ -19,7 +19,7 @@ def create_hours(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    return crud_hours.create_hours(db, hours)
+    return crud_hours.create_hours(db, hours, current_user.id)
 
 
 @router.get("/", response_model=list[HoursResponse])
