@@ -8,6 +8,7 @@ from app.crud import hours as crud_hours
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.hours import Hours
+from fastapi import HTTPException
 router = APIRouter(
     prefix="/hours",
     tags=["Hours"]
@@ -56,7 +57,28 @@ def read_hours(
         sort_by=sort_by,
         order=order
     )
+    
+@router.put("/{hour_id}")
+def update_hour(
+    hour_id: int,
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    hour = db.query(Hours).filter(
+        Hours.id == hour_id,
+        Hours.user_id == current_user.id
+    ).first()
 
+    if not hour:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    hour.permission = data.get("permission", hour.permission)
+
+    db.commit()
+    db.refresh(hour)
+    return hour
+    
 @router.delete("/{hour_id}")
 def delete_hour(
     hour_id: int,
