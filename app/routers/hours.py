@@ -7,11 +7,19 @@ from app.schemas.hours import HoursCreate, HoursResponse
 from app.crud import hours as crud_hours
 from app.core.security import get_current_user
 from app.models.user import User
+from app.models.hours import Hours
 router = APIRouter(
     prefix="/hours",
     tags=["Hours"]
 )
-
+@router.get("/me", response_model=list[HoursResponse])
+def read_my_hours(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    return db.query(Hours).filter(
+        Hours.user_id == current_user.id
+    ).all()
 
 @router.post("/", response_model=HoursResponse)
 def create_hours(
