@@ -1,103 +1,78 @@
 from sqlalchemy.orm import Session
-from app.models.hours import Hours
-from typing import Optional
-from sqlalchemy import or_
-from datetime import date
-from app.schemas.hours import HoursCreate
-from fastapi import HTTPException
-from datetime import datetime
 from sqlalchemy import extract
+from fastapi import HTTPException
+from app.models.hours import Hours
 
+
+# ==========================================
+# 🔹 ANNUAL BALANCE (PER USER)
+# ==========================================
 def get_annual_balance(db: Session, user_id: int, year: int):
+
     records = db.query(Hours).filter(
         Hours.user_id == user_id,
         extract("year", Hours.work_date) == year
     ).all()
 
-    total_overtime = sum(r.overtime_hours for r in records)
-    total_leave = sum(r.leave_hours for r in records)
-
-    annual_leave_entitlement = 21 * 8  # 21 zile * 8 ore
-
-    leave_remaining = annual_leave_entitlement - total_leave
+    total_overtime = sum(r.overtime_hours or 0 for r in records)
+    total_leave = sum(r.leave_hours or 0 for r in records)
 
     overtime_balance = total_overtime - total_leave
 
     return {
         "total_overtime_hours": total_overtime,
         "total_leave_hours": total_leave,
-        "leave_remaining_hours": leave_remaining,
         "overtime_balance_hours": overtime_balance
     }
-    
+
+
+# ==========================================
+# 🔹 CREATE (PER USER)
+# ==========================================
 def create_hours(db: Session, hours, user_id: int):
-    today = hours.work_date
 
     existing = db.query(Hours).filter(
         Hours.user_id == user_id,
-        Hours.work_date == today
+        Hours.work_date == hours.work_date
     ).first()
 
     if existing:
-        raise Exception("Pontaj deja înregistrat pentru această zi")
+        raise HTTPException(
+            status_code=400,
+            detail="Pontaj deja înregistrat pentru această zi"
+        )
 
     db_hours = Hours(
         work_date=hours.work_date,
         permission=hours.permission,
-        overtime_hours=hours.overtime_hours,
-        leave_hours=hours.leave_hours,
+        overtime_hours=hours.overtime_hours or 0,
+        leave_hours=hours.leave_hours or 0,
         user_id=user_id
     )
 
     db.add(db_hours)
     db.commit()
     db.refresh(db_hours)
+
     return db_hours
-    
+
+
+# ==========================================
+# 🔹 ADMIN: GET HOURS (OPTIONAL FILTER USER)
+# ==========================================
 def get_hours(
     db: Session,
     skip: int = 0,
-    limit: int = 10,
-    overtime: Optional[str] = None,
-    overtime_gt: Optional[int] = None,
-    overtime_lt: Optional[int] = None,
-    permission: Optional[str] = None,
-    search: Optional[str] = None,
-    sort_by: str = "id",
-    order: str = "asc"
+    limit: int = 50,
+    user_id: int | None = None
 ):
+
     query = db.query(Hours)
 
-    # Exact filtering
-    if overtime:
-        query = query.filter(Hours.overtime == overtime)
+    if user_id:
+        query = query.filter(Hours.user_id == user_id)
 
-    if permission:
-        query = query.filter(Hours.permission == permission)
-
-    # Numeric comparators (convert string to int safely)
-    if overtime_gt is not None:
-        query = query.filter(Hours.overtime.cast(Integer) > overtime_gt)
-
-    if overtime_lt is not None:
-        query = query.filter(Hours.overtime.cast(Integer) < overtime_lt)
-
-    # Search (LIKE)
-    if search:
-        query = query.filter(
-            or_(
-                Hours.overtime.ilike(f"%{search}%"),
-                Hours.permission.ilike(f"%{search}%")
-            )
-        )
-
-    # Sorting
-    column = getattr(Hours, sort_by, Hours.id)
-
-    if order == "desc":
-        query = query.order_by(column.desc())
-    else:
-        query = query.order_by(column.asc())
-
-    # Pagination
-    return query.offset(skip).limit(limit).all()
+    return query.order_by(Hours.work_date.desc()) \
+        .offset(skip) \
+        .limit(limit) \
+        .all()
