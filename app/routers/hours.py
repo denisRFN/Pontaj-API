@@ -11,10 +11,23 @@ from app.models.hours import Hours
 from fastapi import HTTPException
 from datetime import date
 from sqlalchemy import extract
+
+@router.get("/balance/{year}")
+def get_balance(
+    year: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return crud_hours.get_annual_balance(
+        db,
+        current_user.id,
+        year
+    )
 router = APIRouter(
     prefix="/hours",
     tags=["Hours"]
 )
+
 @router.get("/me", response_model=list[HoursResponse])
 def read_my_hours(
     month: Optional[int] = None,
