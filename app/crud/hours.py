@@ -5,6 +5,30 @@ from sqlalchemy import or_
 from datetime import date
 from app.schemas.hours import HoursCreate
 from fastapi import HTTPException
+from datetime import datetime
+
+def get_annual_balance(db: Session, user_id: int, year: int):
+    records = db.query(Hours).filter(
+        Hours.user_id == user_id,
+        extract("year", Hours.work_date) == year
+    ).all()
+
+    total_overtime = sum(r.overtime_hours for r in records)
+    total_leave = sum(r.leave_hours for r in records)
+
+    annual_leave_entitlement = 21 * 8  # 21 zile * 8 ore
+
+    leave_remaining = annual_leave_entitlement - total_leave
+
+    overtime_balance = total_overtime - total_leave
+
+    return {
+        "total_overtime_hours": total_overtime,
+        "total_leave_hours": total_leave,
+        "leave_remaining_hours": leave_remaining,
+        "overtime_balance_hours": overtime_balance
+    }
+    
 def create_hours(db: Session, hours: HoursCreate, user_id: int):
 
     existing = db.query(Hours).filter(
