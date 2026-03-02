@@ -3,7 +3,8 @@ from app.models.hours import Hours
 from typing import Optional
 from sqlalchemy import or_
 from datetime import date
-
+from app.schemas.hours import HoursCreate
+from fastapi import HTTPException
 def create_hours(db: Session, hours: HoursCreate, user_id: int):
     today = date.today()
     existing = db.query(Hours).filter(
