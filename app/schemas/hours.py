@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import date
 
 class HoursBase(BaseModel):
     overtime: str
@@ -9,6 +10,7 @@ class HoursCreate(HoursBase):
 
 class HoursResponse(HoursBase):
     id: int
+    work_date: date
 
     class Config:
         orm_mode = True
