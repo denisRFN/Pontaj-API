@@ -6,6 +6,7 @@ from datetime import date
 from app.schemas.hours import HoursCreate
 from fastapi import HTTPException
 from datetime import datetime
+from sqlalchemy import extract
 
 def get_annual_balance(db: Session, user_id: int, year: int):
     records = db.query(Hours).filter(
@@ -29,24 +30,23 @@ def get_annual_balance(db: Session, user_id: int, year: int):
         "overtime_balance_hours": overtime_balance
     }
     
-def create_hours(db: Session, hours: HoursCreate, user_id: int):
+def create_hours(db: Session, hours, user_id: int):
+    today = hours.work_date
 
     existing = db.query(Hours).filter(
         Hours.user_id == user_id,
-        Hours.work_date == hours.work_date
+        Hours.work_date == today
     ).first()
 
     if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Pontaj deja înregistrat pentru această zi"
-        )
+        raise Exception("Pontaj deja înregistrat pentru această zi")
 
     db_hours = Hours(
-        overtime=hours.overtime,
+        work_date=hours.work_date,
         permission=hours.permission,
-        user_id=user_id,
-        work_date=hours.work_date
+        overtime_hours=hours.overtime_hours,
+        leave_hours=hours.leave_hours,
+        user_id=user_id
     )
 
     db.add(db_hours)
