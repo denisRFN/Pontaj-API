@@ -12,7 +12,6 @@ from app.models.user import User
 from app.models.hours import Hours
 
 
-# 🔥 DEFINIM ROUTER ÎNAINTE DE DECORATORS
 router = APIRouter(
     prefix="/hours",
     tags=["Hours"]
@@ -20,7 +19,7 @@ router = APIRouter(
 
 
 # ===============================
-# 🔹 ANNUAL BALANCE
+# 🔹 ANNUAL BALANCE (USER ONLY)
 # ===============================
 @router.get("/balance/{year}")
 def get_balance(
@@ -36,7 +35,7 @@ def get_balance(
 
 
 # ===============================
-# 🔹 MY HOURS (FILTER BY MONTH/YEAR)
+# 🔹 MY HOURS (USER ONLY)
 # ===============================
 @router.get("/me", response_model=list[HoursResponse])
 def read_my_hours(
@@ -59,7 +58,7 @@ def read_my_hours(
 
 
 # ===============================
-# 🔹 CREATE
+# 🔹 CREATE (USER ONLY)
 # ===============================
 @router.post("/", response_model=HoursResponse)
 def create_hours(
@@ -71,26 +70,22 @@ def create_hours(
 
 
 # ===============================
-# 🔹 READ ALL (ADMIN USE CASE)
+# 🔹 READ ALL HOURS (ADMIN ONLY)
 # ===============================
 @router.get("/", response_model=list[HoursResponse])
-def read_hours(
+def read_all_hours(
     skip: int = 0,
-    limit: int = 10,
+    limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_admin)
 ):
-    return crud_hours.get_hours(
-        db=db,
-        skip=skip,
-        limit=limit
-    )
+    return db.query(Hours).offset(skip).limit(limit).all()
 
 
 # ===============================
-# 🔹 UPDATE
+# 🔹 UPDATE (ONLY OWN RECORDS)
 # ===============================
-@router.put("/{hour_id}")
+@router.put("/{hour_id}", response_model=HoursResponse)
 def update_hour(
     hour_id: int,
     data: dict,
