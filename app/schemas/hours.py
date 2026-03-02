@@ -4,6 +4,7 @@ from datetime import date
 class HoursBase(BaseModel):
     overtime: str
     permission: str
+    work_date: date
 
 class HoursCreate(HoursBase):
     pass
