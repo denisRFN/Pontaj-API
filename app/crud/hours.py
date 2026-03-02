@@ -6,20 +6,23 @@ from datetime import date
 from app.schemas.hours import HoursCreate
 from fastapi import HTTPException
 def create_hours(db: Session, hours: HoursCreate, user_id: int):
-    today = date.today()
+
     existing = db.query(Hours).filter(
         Hours.user_id == user_id,
-        Hours.work_date == today
+        Hours.work_date == hours.work_date
     ).first()
 
     if existing:
-        raise Exception("Pontaj deja înregistrat azi")
+        raise HTTPException(
+            status_code=400,
+            detail="Pontaj deja înregistrat pentru această zi"
+        )
 
     db_hours = Hours(
         overtime=hours.overtime,
         permission=hours.permission,
         user_id=user_id,
-        work_date=today
+        work_date=hours.work_date
     )
 
     db.add(db_hours)
