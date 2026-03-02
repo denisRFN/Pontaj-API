@@ -76,10 +76,16 @@ def create_hours(
 def read_all_hours(
     skip: int = 0,
     limit: int = 100,
+    user_id: Optional[int] = None,  # 🔥 optional filter
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
-    return db.query(Hours).offset(skip).limit(limit).all()
+    return crud_hours.get_hours(
+        db=db,
+        skip=skip,
+        limit=limit,
+        user_id=user_id
+    )
 
 
 # ===============================
