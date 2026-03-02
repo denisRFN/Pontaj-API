@@ -30,4 +30,6 @@ def get_db():
 
 def init_db():
     from app.models import hours, calendar
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
+
