@@ -2,7 +2,30 @@ from sqlalchemy.orm import Session
 from app.models.hours import Hours
 from typing import Optional
 from sqlalchemy import or_
+from datetime import date
 
+def create_hours(db: Session, hours: HoursCreate, user_id: int):
+    today = date.today()
+    existing = db.query(Hours).filter(
+        Hours.user_id == user_id,
+        Hours.work_date == today
+    ).first()
+
+    if existing:
+        raise Exception("Pontaj deja înregistrat azi")
+
+    db_hours = Hours(
+        overtime=hours.overtime,
+        permission=hours.permission,
+        user_id=user_id,
+        work_date=today
+    )
+
+    db.add(db_hours)
+    db.commit()
+    db.refresh(db_hours)
+    return db_hours
+    
 def get_hours(
     db: Session,
     skip: int = 0,
