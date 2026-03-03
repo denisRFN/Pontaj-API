@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.database import init_db, engine
 from app.routers import hours, calendar, auth
+from app.routers import admin
 
 app = FastAPI(
     title="Pontaj API Production",
@@ -46,3 +47,4 @@ def on_startup():
 app.include_router(hours.router)
 app.include_router(calendar.router)
 app.include_router(auth.router)
+app.include_router(admin.router)
