@@ -7,8 +7,8 @@ from app.models.hours import Hours
 # ==========================================
 # 🔹 ANNUAL BALANCE (PER USER)
 # ==========================================
-def get_annual_balance(db: Session, user_id: int, year: int):
 
+def get_annual_balance(db: Session, user_id: int, year: int):
     records = db.query(Hours).filter(
         Hours.user_id == user_id,
         extract("year", Hours.work_date) == year
